@@ -5,6 +5,8 @@ const { MongoClient } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+dotenv.config()
 
 const app = express();
 app.use(express.json());
@@ -14,14 +16,14 @@ app.get("/", (req, res) => {
   res.json("Tinder app");
 });
 
-const MONGO_URL =
-  "mongodb+srv://gana:orDMV5tzjpXSnRqT@cluster.ltmfm1q.mongodb.net/?retryWrites=true&w=majority";
+const MONGO_URL = process.env.MONGO_URL;
 
 app.post("/signup", async (req, res) => {
-  const client = new MongoClient(MONGO_URL);
-  const { email, password } = req.body; //taking email and password as input
 
-  const generateUserId = uuidv4;        //generating userid from uuid package  
+  const client = new MongoClient(MONGO_URL);
+
+  const { email, password } = req.body; //taking email and password as input
+  const generateUserId = uuidv4; //generating userid from uuid package
   const hashedpassedword = await bcrypt.hash(password, 10); //hashing password using bcrypt with 10 salts
 
   try {
@@ -48,18 +50,21 @@ app.post("/signup", async (req, res) => {
       .collection("users")
       .insertOne(data);
 
+      // create token
     const token = jwt.sign(insertUser, sanitizedEmail, { expiresIn: 60 * 24 });
-    res
-      .status(201)
-      .json({ token, user_id: generateUserId, email: sanitizedEmail });
-  } catch (error) {
+    res.status(201).json({ token, user_id: generateUserId, email: sanitizedEmail });
+  } 
+  catch (error) {
     res.status(500).json({ Message: "Something went wrong" });
     console.log(error);
   }
+
 });
 
 app.get("/users", async (req, res) => {
+
   const client = new MongoClient(MONGO_URL);
+  
   try {
     await client.connect();
     const returnedUsers = await client
@@ -68,10 +73,12 @@ app.get("/users", async (req, res) => {
       .find()
       .toArray();
     res.send(returnedUsers);
-  } catch (error) {
+  }
+   catch (error) {
     res.status(500).json({ Message: "Something went wrong" });
     console.log(error);
   }
+
 });
 
 app.listen(PORT, () => {

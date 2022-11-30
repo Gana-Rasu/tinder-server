@@ -52,7 +52,7 @@ app.post("/signup", async (req, res) => {
 
       // create token
     const token = jwt.sign(insertUser, sanitizedEmail, { expiresIn: 60 * 24 });
-    res.status(201).json({ token, user_id: generateUserId, email: sanitizedEmail });
+    res.status(201).json({ token});
   } 
   catch (error) {
     res.status(500).json({ Message: "Something went wrong" });
@@ -60,6 +60,30 @@ app.post("/signup", async (req, res) => {
   }
 
 });
+
+app.post("/login", async (req, res) => {
+  const client = new MongoClient(MONGO_URL);
+  const {email,password} = req.body;
+
+  try {
+    await client.connect();
+    const user = await client
+      .db("app-data")
+      .collection("users")
+      .findOne({email});
+
+      const correctPassword = await bcrypt.compare(password,user.hashed_passedword)
+      if(user && correctPassword){
+        const token = jwt.sign(user, email, { expiresIn: 60 * 24 });
+        res.status(201).json({token})
+      }
+    res.status(400).send("Invalid credentials");
+  }
+   catch (error) {
+    console.log(error);
+  }
+
+})
 
 app.get("/users", async (req, res) => {
 

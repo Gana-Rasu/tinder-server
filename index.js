@@ -1,4 +1,4 @@
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 4000;
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const { MongoClient } = require("mongodb");
@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
-dotenv.config()
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
@@ -16,7 +16,7 @@ app.get("/", (req, res) => {
   res.json("Tinder app");
 });
 
-const MONGO_URL = process.env.MONGO_URL;
+const MONGO_URL  = process.env.MONGO_URL;
 
 app.post("/signup", async (req, res) => {
 
@@ -28,6 +28,7 @@ app.post("/signup", async (req, res) => {
 
   try {
     await client.connect();
+    console.log("mongodb connected")
     // finding data to see if it has the email already
     const userExist = await client
       .db("app-data")

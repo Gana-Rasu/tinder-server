@@ -5,7 +5,6 @@ const { MongoClient } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const dotenv = require("dotenv");
 require('dotenv').config();
 
 const app = express();

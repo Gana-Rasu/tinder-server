@@ -52,7 +52,7 @@ app.post("/signup", async (req, res) => {
 
       // create token
     const token = jwt.sign(insertUser, sanitizedEmail, { expiresIn: 60 * 24 });
-    res.status(201).json({ token});
+    res.status(201).json({token,userId:generateUserId});
   } 
   catch (error) {
     res.status(500).json({ Message: "Something went wrong" });
@@ -75,9 +75,12 @@ app.post("/login", async (req, res) => {
       const correctPassword = await bcrypt.compare(password,user.hashed_passedword)
       if(user && correctPassword){
         const token = jwt.sign(user, email, { expiresIn: 60 * 24 });
-        res.status(201).json({token})
+        res.status(201).json({token,userId:user.user_id})
       }
-    res.status(400).send("Invalid credentials");
+      else{
+        res.status(400).send("Invalid credentials");
+      }
+
   }
    catch (error) {
     console.log(error);
@@ -104,6 +107,26 @@ app.get("/users", async (req, res) => {
   }
 
 });
+
+// app.put("/user", async(req,res)=>{
+//   const client = new MongoClient(MONGO_URL);
+//   const formData = req.body.formData
+
+//   try {
+//     await client.connect();
+//     const returnedUsers = await client
+//       .db("app-data")
+//       .collection("users")
+//       .find()
+//       .toArray();
+//     res.send(returnedUsers);
+//   }
+//    catch (error) {
+//     res.status(500).json({ Message: "Something went wrong" });
+//     console.log(error);
+//   }
+  
+// })
 
 app.listen(PORT, () => {
   console.log(`app started in ${PORT}`);

@@ -22,7 +22,7 @@ app.post("/signup", async (req, res) => {
   const client = new MongoClient(MONGO_URL);
 
   const { email, password } = req.body; //taking email and password as input
-  const generateUserId = uuidv4; //generating userid from uuid package
+  const generateUserId = uuidv4(); //generating userid from uuid package
   const hashedpassedword = await bcrypt.hash(password, 10); //hashing password using bcrypt with 10 salts
 
   try {
@@ -39,12 +39,14 @@ app.post("/signup", async (req, res) => {
     }
 
     const sanitizedEmail = email.toLowerCase();
+    console.log(generateUserId);
     // inserting data
     const data = {
       user_id: generateUserId,
       email: sanitizedEmail,
       hashed_passedword: hashedpassedword,
     };
+    console.log(data);
     const insertUser = await client
       .db("app-data")
       .collection("users")
@@ -108,25 +110,41 @@ app.get("/users", async (req, res) => {
 
 });
 
-// app.put("/user", async(req,res)=>{
-//   const client = new MongoClient(MONGO_URL);
-//   const formData = req.body.formData
+app.put("/user", async(req,res)=>{
+  const client = new MongoClient(MONGO_URL);
+  const formData = req.body.formData
 
-//   try {
-//     await client.connect();
-//     const returnedUsers = await client
-//       .db("app-data")
-//       .collection("users")
-//       .find()
-//       .toArray();
-//     res.send(returnedUsers);
-//   }
-//    catch (error) {
-//     res.status(500).json({ Message: "Something went wrong" });
-//     console.log(error);
-//   }
+  try {
+    await client.connect();
+    const database = await client
+      .db("app-data")
+      .collection("users");
+console.log(formData.user_id)
+      const query = {user_id:formData.user_id}
+
+      const updateDocument = {
+        $set : {
+          first_name:formData.first_name,
+          dob_day:formData.dob_day,
+          dob_month:formData.dob_month,
+          dob_year:formData.dob_year,
+          show_gender:formData.show_gender,
+          gender_identity:formData.gender_identity,
+          gender_interest:formData.gender_interest,
+          url:formData.url,
+          about:formData.about,
+          matches:formData.matches
+        }  
+      }
+      console.log(updateDocument)
+      const insertedUser = await database.updateOne(query,updateDocument)
+    res.send(insertedUser);
+  }
+   finally{
+   await client.close();
+  }
   
-// })
+})
 
 app.listen(PORT, () => {
   console.log(`app started in ${PORT}`);

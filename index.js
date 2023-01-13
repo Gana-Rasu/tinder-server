@@ -38,7 +38,7 @@ app.post("/signup", async (req, res) => {
     }
 
     const sanitizedEmail = email.toLowerCase();
-    console.log(generateUserId);
+    // console.log(generateUserId);
     // inserting data
     const data = {
       user_id: generateUserId,
@@ -58,7 +58,11 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ Message: "Something went wrong" });
     console.log(error);
   }
+  finally {
+    await client.close()
+}
 });
+
 
 app.post("/login", async (req, res) => {
   const client = new MongoClient(MONGO_URL);
@@ -86,47 +90,56 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/users", async (req, res) => {
+
+
+app.get("/gendered-users/:gender", async (req, res) => {
   const client = new MongoClient(MONGO_URL);
+  const gender = req.params.gender;
+
+  // console.log("gender", gender);
 
   try {
     await client.connect();
-    const returnedUsers = await client
+    const foundUsers = await client
       .db("app-data")
       .collection("users")
-      .find()
+      .find({ gender_identity: gender })
       .toArray();
-    res.send(returnedUsers);
+    res.send(foundUsers);
   } catch (error) {
     res.status(500).json({ Message: "Something went wrong" });
     console.log(error);
   }
+  finally {
+    await client.close()
+}
 });
+
 
 app.get("/user/:userId", async (req, res) => {
   const client = new MongoClient(MONGO_URL);
   const userId = req.params.userId;
 
-  console.log(req.params);
-  console.log(userId)
+  // console.log(req.params);
+  // console.log(userId);
 
   try {
     await client.connect();
     const user = await client
       .db("app-data")
       .collection("users")
-      .findOne({ user_id:userId });
+      .findOne({ user_id: userId });
 
     // const database = await client.db("app-data").collection("users");
     // console.log(database);
     // const query = { userId: userId };
     // const user = database.findOne(query);
     res.send(user);
-
   } finally {
     await client.close();
   }
 });
+
 
 app.put("/user", async (req, res) => {
   const client = new MongoClient(MONGO_URL);
@@ -135,7 +148,7 @@ app.put("/user", async (req, res) => {
   try {
     await client.connect();
     const database = await client.db("app-data").collection("users");
-    console.log(formData.user_id);
+    // console.log(formData.user_id);
     const query = { user_id: formData.user_id };
 
     const updateDocument = {
@@ -152,13 +165,41 @@ app.put("/user", async (req, res) => {
         matches: formData.matches,
       },
     };
-    console.log(updateDocument);
+    // console.log(updateDocument);
     const insertedUser = await database.updateOne(query, updateDocument);
     res.send(insertedUser);
   } finally {
     await client.close();
   }
 });
+
+
+
+app.put("/addmatch", async (req, res) => {
+  const client = new MongoClient(MONGO_URL);
+  const { userId, matchedUserId } = req.body;
+console.log(userId,matchedUserId);
+  try {
+    await client.connect();
+    const database = await client
+      .db("app-data")
+      .collection("users");
+
+      const query = {user_id: userId}
+      const updateDocument = {
+          $push: {matches: {user_id: matchedUserId}}
+      }
+      // logged in user matching with the swiped user and updating the matches array the swiped userid
+      const user = await database.updateOne(query, updateDocument)
+      res.send(user)
+  } catch (error) {
+    console.log(error);
+  }
+  finally {
+    await client.close()
+}
+});
+
 
 app.listen(PORT, () => {
   console.log(`app started in ${PORT}`);
